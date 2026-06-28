@@ -14,7 +14,14 @@ export default function BookContainer() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isMuted, setIsMuted] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    const handleFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFullscreen);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreen);
+  }, []);
 
 
 
@@ -66,14 +73,24 @@ export default function BookContainer() {
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
   useEffect(() => {
     const updateDimensions = () => {
       const vh = window.innerHeight;
-      const h = vh * 0.85;
+      const isMax = !!document.fullscreenElement;
+      // Em fullscreen usa 98% da tela, senao 85%
+      const h = isMax ? vh * 0.98 : vh * 0.85;
       const w = h * 0.707;
       
-      const maxWidth = window.innerWidth / 2 - 20;
-      const maxHeight = window.innerHeight - 40;
+      const maxWidth = window.innerWidth / 2 - (isMax ? 10 : 20);
+      const maxHeight = window.innerHeight - (isMax ? 10 : 40);
 
       const finalWidth = Math.min(w, maxWidth);
       // Mantém a proporção se o width for encolhido
@@ -146,6 +163,25 @@ export default function BookContainer() {
           ) : (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          )}
+        </button>
+
+        <div className="w-px h-6 bg-amber-900/50" />
+
+        <button
+          onClick={toggleFullscreen}
+          className="p-2 text-amber-500 hover:text-amber-400 transition-colors"
+          title={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
+          aria-label={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
+        >
+          {isFullscreen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20V14H3m12 6v-6h6M9 4v6H3m12-6v6h6" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
           )}
         </button>
