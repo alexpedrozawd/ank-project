@@ -7,6 +7,8 @@ const BASE_URL = import.meta.env.BASE_URL;
 interface IPageFlip {
   turnToPage(page: number): void;
   getCurrentPageIndex(): number;
+  flipPrev(): void;
+  flipNext(): void;
 }
 
 interface IFlipBook {
