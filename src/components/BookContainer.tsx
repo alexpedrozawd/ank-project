@@ -153,26 +153,57 @@ export default function BookContainer() {
       {/* Header Buttons Container */}
       <div className="absolute top-[1%] flex items-center gap-4 z-50 backdrop-blur-sm bg-black/20 px-6 py-2 rounded-full border border-amber-900/50 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
         
-        <button
-          onClick={toggleMute}
-          className="p-2 text-amber-500 hover:text-amber-400 transition-colors"
-          title={isMuted ? "Ativar Música" : "Desativar Música"}
-          aria-label={isMuted ? "Ativar Música" : "Desativar Música"}
-        >
-          {isMuted ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-          )}
-        </button>
+        {!isMaximized && (
+          <>
+            {/* Botão Mute/Unmute */}
+            <button
+              onClick={toggleMute}
+              className="p-2 text-amber-500 hover:text-amber-400 transition-colors"
+              title={isMuted ? "Ativar Música" : "Desativar Música"}
+              aria-label={isMuted ? "Ativar Música" : "Desativar Música"}
+            >
+              {isMuted ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              )}
+            </button>
 
-        <div className="w-px h-6 bg-amber-900/50" />
+            <div className="w-px h-6 bg-amber-900/50" />
 
+            {/* Container Fechar/Virar */}
+            <div className="relative h-10 w-36 flex items-center justify-center">
+              {/* Botão de Fechar */}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: state === 'open' ? 1 : 0, pointerEvents: state === 'open' ? 'auto' : 'none' }}
+                onClick={() => handleClose()}
+                className="absolute inset-0 px-6 py-2 bg-amber-600/90 text-slate-900 border border-amber-800 rounded-full font-semibold shadow-lg hover:bg-amber-500 transition-colors"
+              >
+                Fechar Livro
+              </motion.button>
+
+              {/* Botão de Virar */}
+              <motion.button
+                initial={{ opacity: 1 }}
+                animate={{ opacity: state === 'closed' ? 1 : 0, pointerEvents: state === 'closed' ? 'auto' : 'none' }}
+                onClick={handleFlipCover}
+                className="absolute inset-0 px-6 py-2 bg-amber-600/90 text-slate-900 border border-amber-800 rounded-full font-semibold shadow-lg hover:bg-amber-500 transition-colors"
+              >
+                Virar Livro
+              </motion.button>
+            </div>
+
+            <div className="w-px h-6 bg-amber-900/50" />
+          </>
+        )}
+
+        {/* Botão Expandir / Minimizar */}
         <button
           onClick={toggleMaximize}
           disabled={state !== 'open'}
@@ -198,29 +229,6 @@ export default function BookContainer() {
           )}
         </button>
 
-        <div className="w-px h-6 bg-amber-900/50" />
-
-        <div className="relative h-10 w-36 flex items-center justify-center">
-          {/* Botão de Fechar */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: state === 'open' ? 1 : 0, pointerEvents: state === 'open' ? 'auto' : 'none' }}
-            onClick={() => handleClose()}
-            className="absolute inset-0 px-6 py-2 bg-amber-600/90 text-slate-900 border border-amber-800 rounded-full font-semibold shadow-lg hover:bg-amber-500 transition-colors"
-          >
-            Fechar Livro
-          </motion.button>
-
-          {/* Botão de Virar */}
-          <motion.button
-            initial={{ opacity: 1 }}
-            animate={{ opacity: state === 'closed' ? 1 : 0, pointerEvents: state === 'closed' ? 'auto' : 'none' }}
-            onClick={handleFlipCover}
-            className="absolute inset-0 px-6 py-2 bg-amber-600/90 text-slate-900 border border-amber-800 rounded-full font-semibold shadow-lg hover:bg-amber-500 transition-colors"
-          >
-            Virar Livro
-          </motion.button>
-        </div>
       </div>
 
       {/* Livro Fechado (usado para capa e animação de transição) */}
