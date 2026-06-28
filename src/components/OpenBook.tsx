@@ -20,6 +20,7 @@ interface OpenBookProps {
   dimensions: { width: number; height: number };
   onClose: (side: 'front' | 'back') => void;
   onPageChange?: (current: number) => void;
+  isMobile?: boolean;
 }
 
 const TOTAL_PAGES = 16; 
@@ -51,7 +52,7 @@ const Page = React.forwardRef<HTMLDivElement, { imageUrl: string, index: number,
   );
 });
 
-export default function OpenBook({ startSide, dimensions, onClose, onPageChange }: OpenBookProps) {
+export default function OpenBook({ startSide, dimensions, onClose, onPageChange, isMobile }: OpenBookProps) {
   const bookRef = useRef<IFlipBook>(null);
 
   const handlePageClick = (isLeft: boolean) => {
@@ -83,7 +84,7 @@ export default function OpenBook({ startSide, dimensions, onClose, onPageChange 
   return (
     <motion.div 
       className="relative perspective-[2000px]"
-      style={{ width: dimensions.width * 2, height: dimensions.height }}
+      style={{ width: isMobile ? dimensions.width : dimensions.width * 2, height: dimensions.height }}
       initial={{ scale: 1 }}
       animate={{ scale: 1 }}
     >
@@ -99,7 +100,7 @@ export default function OpenBook({ startSide, dimensions, onClose, onPageChange 
           mobileScrollSupport={true}
           className="demo-book"
           ref={bookRef}
-          usePortrait={window.innerWidth < 640}
+          usePortrait={isMobile}
           onFlip={(e: { data: number }) => onPageChange && onPageChange(e.data)}
         >
           {pages.map((url, i) => (
