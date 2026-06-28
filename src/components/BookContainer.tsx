@@ -14,14 +14,8 @@ export default function BookContainer() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isMuted, setIsMuted] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    const handleFullscreen = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFullscreen);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreen);
-  }, []);
 
 
 
@@ -73,27 +67,22 @@ export default function BookContainer() {
     }
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
+  const toggleMaximize = () => {
+    setIsMaximized(prev => !prev);
   };
 
   useEffect(() => {
     const updateDimensions = () => {
       const vh = window.innerHeight;
-      const isMax = !!document.fullscreenElement;
-      // Em fullscreen usa 98% da tela, senao 85%
-      const h = isMax ? vh * 0.98 : vh * 0.85;
+      // Em maximized usa 100% da tela, senao 85%
+      const h = isMaximized ? vh * 1.0 : vh * 0.85;
       const w = h * 0.707;
       
       const isMobile = window.innerWidth < 640;
       const maxWidth = isMobile 
-        ? window.innerWidth - (isMax ? 10 : 40) 
-        : window.innerWidth / 2 - (isMax ? 10 : 20);
-      const maxHeight = window.innerHeight - (isMax ? 10 : 40);
+        ? window.innerWidth - (isMaximized ? 0 : 40) 
+        : window.innerWidth / 2 - (isMaximized ? 0 : 20);
+      const maxHeight = window.innerHeight - (isMaximized ? 0 : 40);
 
       const finalWidth = Math.min(w, maxWidth);
       // Mantém a proporção se o width for encolhido
@@ -105,7 +94,7 @@ export default function BookContainer() {
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+  }, [isMaximized]);
 
   const handleOpen = () => {
     if (coverSide === 'back') {
@@ -173,12 +162,17 @@ export default function BookContainer() {
         <div className="w-px h-6 bg-amber-900/50" />
 
         <button
-          onClick={toggleFullscreen}
-          className="p-2 text-amber-500 hover:text-amber-400 transition-colors"
-          title={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
-          aria-label={isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
+          onClick={toggleMaximize}
+          disabled={state !== 'open'}
+          className={`p-2 transition-all duration-700 ease-out rounded-full ${
+            state === 'open' 
+              ? 'text-amber-500 hover:text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] scale-110' 
+              : 'text-gray-500/40 cursor-not-allowed scale-100'
+          }`}
+          title={isMaximized ? "Restaurar Tamanho" : "Expandir Livro"}
+          aria-label={isMaximized ? "Restaurar Tamanho" : "Expandir Livro"}
         >
-          {isFullscreen ? (
+          {isMaximized ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20V14H3m12 6v-6h6M9 4v6H3m12-6v6h6" />
             </svg>
