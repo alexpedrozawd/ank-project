@@ -74,18 +74,16 @@ export default function BookContainer() {
   useEffect(() => {
     const updateDimensions = () => {
       const vh = window.innerHeight;
-      // Em maximized usa 100% da tela, senao 85%
-      const h = isMaximized ? vh * 1.0 : vh * 0.85;
+      const h = vh * 0.85;
       const w = h * 0.707;
       
       const isMobile = window.innerWidth < 640;
       const maxWidth = isMobile 
-        ? window.innerWidth - (isMaximized ? 0 : 40) 
-        : window.innerWidth / 2 - (isMaximized ? 0 : 20);
-      const maxHeight = window.innerHeight - (isMaximized ? 0 : 40);
+        ? window.innerWidth - 20
+        : window.innerWidth / 2 - 20;
+      const maxHeight = window.innerHeight - 40;
 
       const finalWidth = Math.min(w, maxWidth);
-      // Mantém a proporção se o width for encolhido
       const finalHeight = (finalWidth === w) ? Math.min(h, maxHeight) : (finalWidth / 0.707);
 
       setDimensions({ width: finalWidth, height: finalHeight });
@@ -94,7 +92,7 @@ export default function BookContainer() {
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
-  }, [isMaximized]);
+  }, []);
 
   const handleOpen = () => {
     if (coverSide === 'back') {
@@ -133,8 +131,22 @@ export default function BookContainer() {
     }
   };
 
+  let scaleFactor = 1;
+  if (isMaximized && dimensions.width > 0) {
+    const isMobile = window.innerWidth < 640;
+    const currentBookWidth = isMobile ? dimensions.width : (dimensions.width * 2);
+    const currentBookHeight = dimensions.height;
+    
+    // Scale maximo para caber na tela
+    const scaleX = window.innerWidth / currentBookWidth;
+    const scaleY = window.innerHeight / currentBookHeight;
+    // 0.98 para nao colar completamente nas bordas
+    scaleFactor = Math.min(scaleX, scaleY) * 0.98;
+  }
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center perspective-[2000px]">
+    <div className="relative w-full h-full flex items-center justify-center perspective-[2000px] overflow-hidden">
+
       
       <audio ref={audioRef} src={`${BASE_URL}ankh-soundtrack.mp3`} loop />
 
@@ -166,9 +178,12 @@ export default function BookContainer() {
           disabled={state !== 'open'}
           className={`p-2 transition-all duration-700 ease-out rounded-full ${
             state === 'open' 
-              ? 'text-amber-500 hover:text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] scale-110' 
+              ? 'text-amber-400 hover:text-amber-200 scale-125' 
               : 'text-gray-500/40 cursor-not-allowed scale-100'
           }`}
+          style={{
+            filter: state === 'open' ? 'drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 20px #f59e0b)' : 'none'
+          }}
           title={isMaximized ? "Restaurar Tamanho" : "Expandir Livro"}
           aria-label={isMaximized ? "Restaurar Tamanho" : "Expandir Livro"}
         >
@@ -224,11 +239,12 @@ export default function BookContainer() {
 
       {/* Livro Aberto (react-pageflip) */}
       <div 
-        className="absolute inset-0 flex flex-col items-center justify-end pb-[1%]"
+        className="absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out origin-center"
         style={{ 
           opacity: state === 'open' ? 1 : 0, 
           pointerEvents: state === 'open' ? 'auto' : 'none',
-          zIndex: state === 'open' ? 10 : 0
+          zIndex: state === 'open' ? 10 : 0,
+          transform: `scale(${scaleFactor})`
         }}
       >
         {/* Renderizamos sempre para não perder estado, mas só interage quando open */}
