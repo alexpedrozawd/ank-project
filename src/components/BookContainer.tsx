@@ -89,7 +89,10 @@ export default function BookContainer() {
       const h = isMax ? vh * 0.98 : vh * 0.85;
       const w = h * 0.707;
       
-      const maxWidth = window.innerWidth / 2 - (isMax ? 10 : 20);
+      const isMobile = window.innerWidth < 640;
+      const maxWidth = isMobile 
+        ? window.innerWidth - (isMax ? 10 : 40) 
+        : window.innerWidth / 2 - (isMax ? 10 : 20);
       const maxHeight = window.innerHeight - (isMax ? 10 : 40);
 
       const finalWidth = Math.min(w, maxWidth);
@@ -241,6 +244,7 @@ export default function BookContainer() {
             dimensions={dimensions} 
             onClose={handleClose} 
             onPageChange={setCurrentPage}
+            isMobile={window.innerWidth < 640}
           />
         )}
       </div>
