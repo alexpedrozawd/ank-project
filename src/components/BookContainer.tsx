@@ -247,7 +247,7 @@ export default function BookContainer() {
 
       {/* Livro Aberto (react-pageflip) */}
       <div 
-        className="absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out origin-center"
+        className="absolute inset-0 flex flex-col items-center justify-end pb-[1%] transition-all duration-700 ease-out origin-bottom"
         style={{ 
           opacity: state === 'open' ? 1 : 0, 
           pointerEvents: state === 'open' ? 'auto' : 'none',
