@@ -25,24 +25,29 @@ interface OpenBookProps {
   isMobile?: boolean;
 }
 
-const pageNumbers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18];
+// Sequência do miolo (16 páginas = 8 spreads; divisores 02 e 18 ocultados em telas pequenas)
+const PAGE_NUMBERS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18];
 
-const Page = React.forwardRef<HTMLDivElement, { imageUrl: string, index: number, onClickPage: (isLeft: boolean) => void }>((props, ref) => {
-  const roundedClass = props.index % 2 === 0 ? 'rounded-l-2xl' : 'rounded-r-2xl';
+const Page = React.forwardRef<
+  HTMLDivElement,
+  { imageUrl: string; index: number; onClickPage: (isLeft: boolean) => void }
+>(({ imageUrl, index, onClickPage }, ref) => {
+  const isLeft = index % 2 === 0;
+  const rounded = isLeft ? 'rounded-l-2xl' : 'rounded-r-2xl';
   return (
-    <div 
-      className={`page bg-white cursor-pointer ${roundedClass}`} 
-      ref={ref} 
+    <div
+      ref={ref}
       data-density="soft"
-      onClick={() => props.onClickPage(props.index % 2 === 0)}
+      className={`page bg-white cursor-pointer ${rounded}`}
+      onClick={() => onClickPage(isLeft)}
     >
-      <img 
-        src={props.imageUrl} 
-        alt={`Conteúdo da página ${props.index + 2}`} 
-        className={`w-full h-full object-fill pointer-events-none select-none ${roundedClass}`}
-        loading={props.index > 3 ? "lazy" : "eager"}
+      <img
+        src={imageUrl}
+        alt={`Página ${index + 2}`}
+        className={`w-full h-full object-fill pointer-events-none select-none ${rounded}`}
+        loading={index > 3 ? 'lazy' : 'eager'}
       />
-      <div className="sr-only">{`Texto legível da página ${props.index + 2} para acessibilidade`}</div>
+      <div className="sr-only">{`Texto da página ${index + 2}`}</div>
     </div>
   );
 });
@@ -50,98 +55,78 @@ const Page = React.forwardRef<HTMLDivElement, { imageUrl: string, index: number,
 export default function OpenBook({ startSide, dimensions, onClose, onPageChange, isMobile }: OpenBookProps) {
   const bookRef = useRef<IFlipBook>(null);
 
-  const renderPageNumbers = isMobile 
-    ? pageNumbers.filter(num => num !== 2 && num !== 18) 
-    : pageNumbers;
-    
-  const currentTotalPages = renderPageNumbers.length;
-
-  const renderPages = renderPageNumbers.map(num => {
-    const padded = num.toString().padStart(2, '0');
-    return `${BASE_URL}pages/page-${padded}.webp`;
-  });
+  const activePages = isMobile
+    ? PAGE_NUMBERS.filter((n) => n !== 2 && n !== 18)
+    : PAGE_NUMBERS;
+  const total = activePages.length;
 
   const handlePageClick = (isLeft: boolean) => {
-    if (bookRef.current) {
-      const pageFlip = bookRef.current.pageFlip();
-      const current = pageFlip.getCurrentPageIndex();
-      
-      if (isLeft && current === 0) {
-        onClose('front');
-      } else if (!isLeft && current >= currentTotalPages - (isMobile ? 1 : 2)) {
-        onClose('back');
-      }
-    }
+    const pf = bookRef.current?.pageFlip();
+    if (!pf) return;
+    const current = pf.getCurrentPageIndex();
+    if (isLeft && current === 0) onClose('front');
+    else if (!isLeft && current >= total - (isMobile ? 1 : 2)) onClose('back');
   };
 
-  const flipPrev = () => bookRef.current?.pageFlip().flipPrev();
-  const flipNext = () => bookRef.current?.pageFlip().flipNext();
-
   useEffect(() => {
-    if (bookRef.current && bookRef.current.pageFlip()) {
-      if (startSide === 'back') {
-        // Go to last page/spread instantly if possible
-        bookRef.current.pageFlip().turnToPage(currentTotalPages - (isMobile ? 1 : 2));
-      } else {
-        bookRef.current.pageFlip().turnToPage(0);
-      }
+    const pf = bookRef.current?.pageFlip();
+    if (pf) {
+      pf.turnToPage(startSide === 'back' ? total - (isMobile ? 1 : 2) : 0);
     }
-  }, [startSide]);
+  }, [startSide, total, isMobile]);
 
-  if (dimensions.width === 0) return null;
+  if (!dimensions.width) return null;
 
   return (
-    <motion.div 
+    <motion.div
       className="relative perspective-[2000px]"
       style={{ width: isMobile ? dimensions.width : dimensions.width * 2, height: dimensions.height }}
       initial={{ scale: 1 }}
       animate={{ scale: 1 }}
     >
-      {/* Container do livro aberto com largura total fixa baseada na página */}
-      <div 
-        className="relative shadow-2xl w-full h-full" 
-      >
-        <HTMLFlipBook 
-          width={dimensions.width} 
-          height={dimensions.height} 
+      <div className="relative shadow-2xl w-full h-full">
+        <HTMLFlipBook
+          ref={bookRef}
+          width={dimensions.width}
+          height={dimensions.height}
           size="fixed"
           showCover={false}
           mobileScrollSupport={true}
           className="demo-book"
-          ref={bookRef}
           usePortrait={isMobile}
-          onFlip={(e: { data: number }) => onPageChange && onPageChange(e.data)}
+          onFlip={(e: { data: number }) => onPageChange?.(e.data)}
         >
-          {renderPages.map((url, i) => (
-            <Page key={i} index={i} imageUrl={url} onClickPage={handlePageClick} />
+          {activePages.map((num, i) => (
+            <Page
+              key={num}
+              index={i}
+              imageUrl={`${BASE_URL}pages/page-${num.toString().padStart(2, '0')}.webp`}
+              onClickPage={handlePageClick}
+            />
           ))}
         </HTMLFlipBook>
 
         {/* Setas de Navegação */}
-        <button 
-          onClick={flipPrev}
-          className={`absolute z-50 p-2 text-amber-500/50 hover:text-amber-400/80 transition-colors drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] ${
-            isMobile 
-              ? 'bottom-4 left-4 scale-75' 
-              : 'top-1/2 -translate-y-1/2 -left-16 scale-125'
+        <button
+          onClick={() => bookRef.current?.pageFlip().flipPrev()}
+          className={`absolute z-50 p-2 text-amber-500/60 hover:text-amber-400 drop-shadow transition-colors ${
+            isMobile ? 'bottom-4 left-4 scale-75' : 'top-1/2 -translate-y-1/2 -left-16 scale-125'
           }`}
           aria-label="Página Anterior"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-10 w-10 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <button 
-          onClick={flipNext}
-          className={`absolute z-50 p-2 text-amber-500/50 hover:text-amber-400/80 transition-colors drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] ${
-            isMobile 
-              ? 'bottom-4 right-4 scale-75' 
-              : 'top-1/2 -translate-y-1/2 -right-16 scale-125'
+        <button
+          onClick={() => bookRef.current?.pageFlip().flipNext()}
+          className={`absolute z-50 p-2 text-amber-500/60 hover:text-amber-400 drop-shadow transition-colors ${
+            isMobile ? 'bottom-4 right-4 scale-75' : 'top-1/2 -translate-y-1/2 -right-16 scale-125'
           }`}
           aria-label="Próxima Página"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-10 w-10 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>

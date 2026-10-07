@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# Ank — O Livro de Ankh
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Livro digital folheável em 3D baseado no lore dos Conspiradores (jogo Tibia), criado por Thiago Pedroza a partir do documento original de 20 páginas em formato A4 (`ank-project.pdf`).
 
-Currently, two official plugins are available:
+## Stack e Arquitetura
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend**: React 19 + TypeScript + Vite 8
+- **Estilos & 3D**: Tailwind CSS v4 + Framer Motion 12
+- **Folheamento**: `react-pageflip` 2.0.3 (`st-page-flip`)
+- **Assets Estáticos**: 20 páginas em WebP otimizado (300 DPI, q=85) em `public/pages/`
+- **Áudio**: Trilha sonora ambiente em loop (`public/ankh-soundtrack.mp3`)
+- **Deploy**: GitHub Pages via GitHub Actions (`.github/workflows/deploy.yml`), base path `/ank-project/`
 
-## React Compiler
+## Estrutura do Código (`src/`)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── main.tsx                  # Ponto de montagem React 19
+├── App.tsx                   # Cenário da mesa de madeira rústica e container
+├── index.css                 # Import Tailwind v4 e utilitários de perspectiva 3D
+└── components/
+    ├── BookContainer.tsx     # FSM do livro, áudio, redimensionamento A4 e header
+    ├── ClosedBook.tsx        # Livro fechado na mesa, hover tátil e giro 180°
+    └── OpenBook.tsx          # Livro aberto com react-pageflip e setas de navegação
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Máquina de Estados (FSM)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Estados gerenciados em `BookContainer`:
+- `closed`: Livro deitado na mesa (exibe capa frontal `page-01` ou verso `page-20`).
+- `flipping`: Transição de rotação 180° no eixo Y para alternar a capa visível.
+- `opening`: Transição de abertura 3D suave simulando elevação e abertura da capa.
+- `open`: Livro aberto e interativo via `react-pageflip` (spread duplo em desktop, folha única em <640px).
+- `closing`: Retorno animado ao estado fechado na mesa.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Mapeamento de Páginas
+
+| Página | Função | Modo de Visualização |
+| --- | --- | --- |
+| 01 | Capa Frontal | `ClosedBook` (mesa) |
+| 02 - 19 | Miolo / Conteúdo Interno | `OpenBook` (spreads duplos; págs 02, 11 e 19 são divisores em branco) |
+| 20 | Capa Traseira | `ClosedBook` (mesa, após virar) |
+
+## Comandos Operacionais
+
+```bash
+npm run dev      # Servidor local de desenvolvimento
+npm run build    # Checagem de tipo (tsc -b) e build de produção (Vite)
+npm run preview  # Pré-visualização do build de produção
 ```
+
+Deploy automático na branch `main` dispara o workflow do GitHub Actions publicando em `https://alexpedrozawd.github.io/ank-project/`.
